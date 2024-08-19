@@ -9,8 +9,8 @@ package "PaulinIntroToAbstractAlgebra" where
   -- add any additional package configuration options here
 
 require "leanprover-community" / "mathlib"
--- just for visualizations
-require Paperproof from git "https://github.com/Paper-Proof/paperproof.git"@"main"/"lean"
+-- -- just for visualizations (kinda breaks tho)
+-- require Paperproof from git "https://github.com/Paper-Proof/paperproof.git"@"main"/"lean"
 @[default_target]
 lean_lib «PaulinIntroToAbstractAlgebra» where
   -- add any library configuration options here

@@ -1,5 +1,4 @@
-import mathlib
-import Paperproof -- just for visualizations
+import Mathlib
 open Function
 open Classical
 -- Bottom of page 5
