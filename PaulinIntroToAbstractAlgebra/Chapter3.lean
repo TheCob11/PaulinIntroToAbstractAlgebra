@@ -34,6 +34,12 @@ theorem lagranges_theorem [Group G] (S: Subgroup G) : card S ∣ card G :=
     _ = _ := mul_comm _ _
   ⟨k, hk⟩
 
+-- example corollary listed below the thm
+example [Group G] (hG : Nat.Prime (card G)) (S: Subgroup G) : S = ⊥ ∨ S = ⊤ :=
+  have _G_Finite := Nat.finite_of_card_ne_zero hG.ne_zero -- necessary for eq_top_of_card_eq
+  have card_eq_1_or_p : card S = 1 ∨ card S = card G := (Nat.dvd_prime hG).mp (lagranges_theorem S)
+  Or.imp (Subgroup.eq_bot_of_card_eq S) (Subgroup.eq_top_of_card_eq S) card_eq_1_or_p
+
 end SubgroupsCosetsLagrange
 
 section OrbitStabilizerSylow
