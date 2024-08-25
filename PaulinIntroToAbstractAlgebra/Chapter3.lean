@@ -11,9 +11,9 @@ noncomputable def G_equiv_G_quo_S_prod_S [Group G] (S: Subgroup G) : G ≃ (G⧸
     mul_inv_eq_iff_eq_mul.mpr (s_exists x).choose_spec
   have right_inv : Function.RightInverse f_inv f := fun (xS, ⟨s, hs⟩) ↦
     let x := xS.out';
-    have left : ↑(x * s⁻¹) = xS := calc
-      (x * s⁻¹ : G⧸S) = ↑(x * s⁻¹ * s) := (QuotientGroup.mk_mul_of_mem _ hs).symm
-      _ = ↑x := congrArg (⟦·⟧) (inv_mul_cancel_right _ s)
+    have left : ↑(x * s⁻¹) = xS := calc (x * s⁻¹ : G⧸S)
+      _ = ↑(x * s⁻¹ * s) := (QuotientGroup.mk_mul_of_mem _ hs).symm
+      _ = ↑x := inv_mul_cancel_right _ s ▸ rfl
       _ = xS := xS.out_eq'
 
     have right : (s_exists (x * s⁻¹)).choose = ⟨s, hs⟩ := by
@@ -28,8 +28,8 @@ noncomputable def G_equiv_G_quo_S_prod_S [Group G] (S: Subgroup G) : G ≃ (G⧸
 
 theorem lagranges_theorem [Group G] (S: Subgroup G) : card S ∣ card G :=
   let k := card (G⧸S);
-  have hk : card G = card S * k := calc
-    card G = card ((G⧸S)×S) := Nat.card_congr (G_equiv_G_quo_S_prod_S S)
+  have hk : card G = card S * k := calc card G
+    _ = card ((G⧸S)×S) := Nat.card_congr (G_equiv_G_quo_S_prod_S S)
     _ = k * card S := Nat.card_prod _ _
     _ = _ := mul_comm _ _
   ⟨k, hk⟩
@@ -57,13 +57,13 @@ theorem prime_order_cyclic [Group G] [h: Fact (Nat.card G).Prime] : IsCyclic G :
     Or.resolve_left prime_order_subgroups_bot_top gp_x_not_bot
   ⟨x, (Subgroup.eq_top_iff' gp_x).mp gp_x_top⟩
 
-def cyclic_abelian [Group G] [h: IsCyclic G] : CommGroup G := .mk <| fun a b ↦
+def cyclic_abelian [Group G] [h: IsCyclic G] : CommGroup G := .mk fun a b ↦
   have ⟨x, hx⟩ := h.exists_generator;
   have ⟨r, hr⟩ := Subgroup.mem_zpowers_iff.mp (hx a)
   have ⟨s, hs⟩ := Subgroup.mem_zpowers_iff.mp (hx b)
   calc a * b = x^r * x^s := hs ▸ hr ▸ rfl
        _ = x ^ (r + s) := (zpow_add _ _ _).symm
-       _ = x ^ (s + r) := congrArg _ (add_comm _ _)
+       _ = x ^ (s + r) := (add_comm s r) ▸ rfl
        _ = x ^ s * x ^ r := zpow_add _ _ _
        _ = b * a := hr ▸ hs ▸ rfl
 
@@ -87,7 +87,7 @@ noncomputable def cyclic_infinite_Z [Group G] [Infinite G] [hG: IsCyclic G] :
     have ⟨a, ha⟩ := h_pow g₁;
     have ⟨b, hb⟩ := h_pow g₂;
     calc φ (g₁ * g₂) = φ (x ^ a * x ^ b) := ha ▸ hb ▸ rfl
-         _ = φ (x ^ (a + b)) := congrArg φ (zpow_add _ _ _).symm
+         _ = φ (x ^ (a + b)) := zpow_add x _ _ ▸ rfl
          _ = a + b := φ_pow
          _ = φ (x ^ a) * φ (x ^ b) := φ_pow ▸ φ_pow ▸ rfl
          _ = φ g₁ * φ g₂ := ha ▸ hb ▸ rfl
@@ -126,11 +126,12 @@ noncomputable def cyclic_finite_ZMod [Group G] [Fintype G] [hG: IsCyclic G] :
       simp_all only [ZMod.natCast_val, Int.cast_add,
                      ZMod.intCast_cast, ZMod.cast_intCast']
       rfl
-    calc φ (g₁ * g₂) = φ (x ^ (a.val: ℤ) * x ^ (b.val: ℤ)) := ha ▸ hb ▸ rfl
-         _ = φ (x ^ ((a.val: ℤ) + (b.val: ℤ))) := congrArg φ (zpow_add _ _ _).symm
-         _ = φ (x ^ ((a * b).val : ℤ)) := congrArg φ zmpow_add
+    let aZ: ℤ := a.val; let bZ: ℤ := b.val
+    calc φ (g₁ * g₂) = φ (x ^ aZ * x ^ bZ) := ha ▸ hb ▸ rfl
+         _ = φ (x ^ (aZ + bZ)) := zpow_add x _ _ ▸ rfl
+         _ = φ (x ^ ((a * b).val : ℤ)) := zmpow_add ▸ rfl
          _ = a * b := right_inv _
-         _ = φ (x ^ (a.val: ℤ)) * φ (x ^ (b.val: ℤ)) := right_inv _ ▸ right_inv _ ▸ rfl
+         _ = φ (x ^ aZ) * φ (x ^ bZ) := right_inv _ ▸ right_inv _ ▸ rfl
          _ = φ g₁ * φ g₂ := ha ▸ hb ▸ rfl
   MulEquiv.mk φ_Equiv map_mul'
 
