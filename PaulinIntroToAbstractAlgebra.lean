@@ -2,3 +2,4 @@
 -- Import modules here that should be built as part of the library.
 import PaulinIntroToAbstractAlgebra.Chapter1
 import PaulinIntroToAbstractAlgebra.Chapter2
+import PaulinIntroToAbstractAlgebra.Chapter3
