@@ -134,44 +134,6 @@ noncomputable def cyclic_finite_ZMod [Group G] [Fintype G] [hG: IsCyclic G] :
          _ = φ g₁ * φ g₂ := ha ▸ hb ▸ rfl
   MulEquiv.mk φ_Equiv map_mul'
 
--- noncomputable def cyclic_Z_or_ZMod [Group G] [IsCyclic G] :
---   (G ≃* Multiplicative ℤ) ⊕ (G ≃* Multiplicative (ZMod (Nat.card G))) :=
---   have fin_case (h: ¬Infinite G) : G ≃* Multiplicative (ZMod (Nat.card G)) :=
---     have _G_Fintype : Fintype G := fintypeOfNotInfinite h
---     @Nat.card_eq_fintype_card G _ ▸ cyclic_finite_ZMod
---   have _ := Classical.dec;
---   if h: Infinite G then .inl cyclic_infinite_Z else .inr (fin_case h)
-
--- example (S: Subgroup (Multiplicative ℤ)) : ∃ n: ℕ, IsLeast S.carrier ↑(n: ℤ) := by
---   -- exact?
---   #check @Int.exists_least_of_bdd (λx ↦ x ∈ S ∧ 1 ≤ x) ⟨1, λ_ ↦ (·.2)⟩
---   sorry
-
--- theorem cyclic_subgroup_cyclic [Group G] [hG: IsCyclic G] (S: Subgroup G): IsCyclic S :=
---   have _ := Classical.dec;
---   -- trivial case, not indenting the else bc its more like an early return
---   if h: ¬Nontrivial S then @isCyclic_of_subsingleton S _ (not_nontrivial_iff_subsingleton.mp h)
---   else
---   have _ : Nontrivial S := not_not.mp h; clear% h;
---   have case_Z (e: G ≃* Multiplicative ℤ) : IsCyclic S := by
---     let SZ : Subgroup (Multiplicative ℤ) := Subgroup.map e S
---     have eS: S ≃* SZ := e.subgroupMap S
---     have _ : Nontrivial SZ := eS.toEquiv.symm.nontrivial
---     have : IsCyclic SZ :=
---       have unga := @Int.exists_least_of_bdd (λx ↦ x ∈ SZ ∧ 2 ≤ x) ⟨2, λ_ ↦ And.right⟩ (by
---         have ⟨n, hn⟩ : ∃ n : SZ, 1 < n := exists_one_lt'
---         use ((n: Multiplicative ℤ): ℤ)
---         simp only [SetLike.coe_mem, true_and]
-
---       )
-
---       sorry
---     -- #check e.forall_congr
---     -- #check (h.subgroupMap S).
---     sorry
---   have case_ZMod (e: G ≃* Multiplicative (ZMod (Nat.card G))) : IsCyclic S := sorry
---   cyclic_Z_or_ZMod.elim case_Z case_ZMod
-
 noncomputable def cyclic_equiv_ZMod [Group G] [IsCyclic G] :
   (G ≃* Multiplicative (ZMod (Nat.card G))) :=
   have inf_case (_: Infinite G) : G ≃* Multiplicative (ZMod (Nat.card G)) :=
@@ -185,19 +147,19 @@ noncomputable def cyclic_equiv_ZMod [Group G] [IsCyclic G] :
 theorem cyclic_subgroup_cyclic [Group G] [hG: IsCyclic G] (S: Subgroup G): IsCyclic S :=
   have _ := Classical.dec;
   -- trivial case, not indenting the else bc its more like an early return
-  if h: ¬Nontrivial S then @isCyclic_of_subsingleton S _ (not_nontrivial_iff_subsingleton.mp h)
-  else
-  have _ : Nontrivial S := not_not.mp h; clear% h;
+  if h: ¬Nontrivial S then
+    @isCyclic_of_subsingleton S _ (not_nontrivial_iff_subsingleton.mp h)
+  else have _ : Nontrivial S := not_not.mp h; clear% h;
   have ⟨a, ha⟩ := IsCyclic.exists_generator (α := G);
   have ex_m : ∃ m, 0 < m ∧ a ^ m ∈ S :=
-    have ⟨s, s_ne_1⟩ := (nontrivial_iff_exists_ne 1).mp ‹Nontrivial S›
+    have ⟨s, _s_ne_1⟩ := (nontrivial_iff_exists_ne 1).mp ‹Nontrivial S›
     have ⟨nZ, hnZ⟩ := Subgroup.mem_zpowers_iff.mp (ha s)
     have a_nZ_mem : (a ^ nZ) ∈ S := (congrArg (· ∈ S) hnZ).mpr (SetLike.coe_mem s);
     let n := nZ.natAbs
     have n_pos : 0 < n :=
       have nZ_nz : nZ ≠ 0 := by
-        by_contra _
-        obtain ⟨_, _⟩ := s
+        by_contra _h
+        obtain ⟨_sG, _s_mem⟩ := s
         simp_all only [ne_eq, Submonoid.mk_eq_one, zpow_zero]
       Int.natAbs_pos.mpr nZ_nz
     have a_n_mem : (a ^ n) ∈ S :=
@@ -208,8 +170,8 @@ theorem cyclic_subgroup_cyclic [Group G] [hG: IsCyclic G] (S: Subgroup G): IsCyc
         by rwa [eq_neg, zpow_neg a ↑n, Subgroup.inv_mem_iff S, zpow_natCast] at a_nZ_mem
     ⟨n, ⟨n_pos, a_n_mem⟩⟩
   let m := Nat.find ex_m
-  have hm := Nat.find_spec ex_m
-  let s: S := ⟨a ^ m, hm.right⟩
+  have ⟨m_pos, a_m_mem⟩ := Nat.find_spec ex_m
+  let s: S := ⟨a ^ m, a_m_mem⟩
   have s_gen (s': S) : s' ∈ Subgroup.zpowers s :=
     let ⟨k, hk⟩ := Subgroup.mem_zpowers_iff.mp (ha s')
     let q := k.ediv m;
@@ -221,102 +183,29 @@ theorem cyclic_subgroup_cyclic [Group G] [hG: IsCyclic G] (S: Subgroup G): IsCyc
         _ = a ^ (m * q) * a ^ r := zpow_add a (↑m * q) r
         _ = (a ^ m) ^ q * a ^ r := zpow_mul a (↑m) q ▸ zpow_natCast a m ▸ rfl
         _ = s ^ q * a ^ r := rfl
-      have a_r_mem : a ^ r ∈ S := by
-        rw [← inv_mul_eq_iff_eq_mul] at h
-        norm_cast at h
-        exact (Subtype.coe_eq_iff.mp h).choose
-      have r_lt_m : r < m := Int.emod_lt_of_pos k (Int.ofNat_pos.mpr hm.left)
-      have r_nonneg : 0 ≤ r :=
-        have m_nz : m ≠ 0 := Nat.not_eq_zero_of_lt hm.left;
-        Int.emod_nonneg k (Int.ofNat_ne_zero.mpr m_nz)
-      let rN := r.toNat
-      have r_eq_rN : r = rN := (Int.toNat_of_nonneg r_nonneg).symm;
-      have rN_lt_m : rN < m := (Int.toNat_lt r_nonneg).mpr r_lt_m
-      have a_rN_mem : a ^ rN ∈ S := by
-        rwa [r_eq_rN, zpow_natCast] at a_r_mem
-
-      have rN_zero : rN = 0 := by
-        have := Nat.find_min ex_m rN_lt_m
-        simp_all only [and_true, not_lt, nonpos_iff_eq_zero]
-      have r_zero : r = 0 := by rwa [rN_zero] at r_eq_rN
-      SetCoe.ext <| Eq.symm <|  calc (s': G)
+      have r_eq_zero : r = 0 :=
+        have r_nonneg : 0 ≤ r :=
+          have m_nz : m ≠ 0 := Nat.not_eq_zero_of_lt m_pos;
+          Int.emod_nonneg k (Int.ofNat_ne_zero.mpr m_nz)
+        let rN := r.toNat
+        have r_eq_rN : r = ↑rN := (Int.toNat_of_nonneg r_nonneg).symm;
+        have rN_zero : rN = 0 :=
+          have rN_lt_m : rN < m :=
+            have r_lt_m : r < m := Int.emod_lt_of_pos k (Int.ofNat_pos.mpr m_pos)
+            (Int.toNat_lt r_nonneg).mpr r_lt_m
+          have r_fails_ex_m := Nat.find_min ex_m rN_lt_m
+          have a_r_mem : a ^ r ∈ S := by
+            rw_mod_cast [← inv_mul_eq_iff_eq_mul, Subtype.coe_eq_iff] at h
+            exact h.choose
+          have a_rN_mem : a ^ rN ∈ S := by rwa [r_eq_rN, zpow_natCast] at a_r_mem
+          by simp_all only [and_true, not_lt, nonpos_iff_eq_zero]
+        r_eq_rN ▸ congrArg Nat.cast rN_zero
+      SetCoe.ext <| Eq.symm <| calc (s': G)
         _ = s ^ q * a ^ r := h
-        _ = s ^ q * a ^ (0: ℤ) := r_zero ▸ rfl
-        _ = s ^ q * 1 := zpow_zero a ▸ rfl
+        _ = s ^ q * 1 := r_eq_zero ▸ zpow_zero a ▸ rfl
         _ = s ^ q := mul_one _
     Subgroup.mem_zpowers_iff.mpr ⟨q, s_q_eq⟩
   ⟨s, s_gen⟩
-
--- theorem cyclic_subgroup_cyclic [Group G] [hG: IsCyclic G] (S: Subgroup G): IsCyclic S :=
---   have _ := Classical.dec;
---   -- trivial case, not indenting the else bc its more like an early return
---   if h: ¬Nontrivial S then @isCyclic_of_subsingleton S _ (not_nontrivial_iff_subsingleton.mp h)
---   else
---   by
--- · have _ : Nontrivial S := not_not.mp h; clear h;
---   let nG := Nat.card G;
---   let ZM := ZMod nG;
---   let MZM := Multiplicative ZM
---   have e: G ≃* MZM := cyclic_equiv_ZMod
---   let SZ: Subgroup MZM := Subgroup.map e S;
---   have eS := e.subgroupMap S;
---   have SZ_Nontriv : Nontrivial SZ := eS.toEquiv.symm.nontrivial
---   have ex1_ZM: ∃(n: ZM), let x := Multiplicative.ofAdd n; x ∈ SZ ∧ x ≠ 1 :=
---     ((@nontrivial_iff_exists_ne SZ 1).mp SZ_Nontriv).imp'
---       (fun (x: SZ) ↦ (Multiplicative.toAdd (x: MZM)))
---       fun ⟨_a, a_mem⟩ ha ↦ ⟨a_mem, OneMemClass.coe_eq_one.ne.mpr ha⟩
---   have ex2_N : ∃(n: ℕ), let x := Multiplicative.ofAdd (n: ZM); x ∈ SZ ∧ x ≠ 1 :=
---     if h_nG : NeZero nG then
---       ex1_ZM.imp' ZMod.val fun a ha ↦ (ZMod.natCast_zmod_val a).symm.subst ha
---     else ex1_ZM.imp' ZMod.val fun a ha ↦
---         -- infinite case, G ≃* (ℤ, +)
---         have nG_zero := not_neZero.mp h_nG;
---         -- have ZM_eq_Z : ZM = ℤ := by unfold_let ZM; rw [nG_zero]; rfl
---         let ⟨a_mem, a_ne_1⟩ := ha;
---         -- let x := Multiplicative.ofAdd (a.valMinAbs.natAbs: ZM);
---         -- -- have : a.valMinAbs = a := ZMod.coe_valMinAbs a
---         -- have x_mem : x ∈ SZ :=
---         --   -- #check Int.natAbs_eq
---         --   -- #check Subgroup.inv_mem
---         --   match Int.natAbs_eq a.valMinAbs with
---         --   | Or.inl hx => by
---         --     unfold_let x
---         --     rw [hx]
---         --     simp
---         --     rw [Int.natAbs_abs]
-
---         --     sorry
---         --   | Or.inr hx => sorry
---         -- have x_ne_one : x ≠ 1 := sorry
---         -- exact ⟨x_mem, x_ne_one⟩
---         let x := Multiplicative.ofAdd (a.val: ZM)
---         have x_mem : x ∈ SZ :=
---           -- #check ZMod.valMinAbs_eq_zero
---           have val_eq_valma : (a.val: ZM) = (a.valMinAbs: ZM) := by
---             rw [ZMod.valMinAbs]
---             simp [nG_zero]
---             sorry
---           -- #check ZMod.natAbs_valMinAbs_neg
---           -- -- have ZM_Z : ZMod nG = ZMod 0 := congrArg ZMod nG_zero;
---           -- -- rw [← ZMod.coe_valMinAbs a] at a_mem
---           -- by unfold_let x; exact val_eq_valma ▸ (ZMod.coe_valMinAbs a).symm ▸ a_mem
---           have a_vma_mem := (ZMod.coe_valMinAbs a).symm ▸ a_mem
---           by
---           sorry
---         have x_ne_one : x ≠ 1 := by
---           rw [ne_eq, ofAdd_eq_one,
---               ZMod.natCast_zmod_eq_zero_iff_dvd]
---           simp_rw [nG_zero]
---           rw [Nat.zero_dvd]
---           exact (ZMod.val_ne_zero a).mpr a_ne_1
---         ⟨x_mem, x_ne_one⟩
-
---   let n := Nat.find ex2_N
---   -- have n_gen_SZ (x: SZ) : x ∈ Subgroup.zpowers (Multiplicative.ofAdd (n: ZM)) := by
---   --   sorry
---   -- #check IsCyclic.mk
---   sorry
-
 
 end FinitelyGeneratedGroups
 
