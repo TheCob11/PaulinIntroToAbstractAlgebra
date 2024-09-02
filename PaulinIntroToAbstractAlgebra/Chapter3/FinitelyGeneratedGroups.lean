@@ -26,8 +26,8 @@ def cyclic_abelian [Group G] [h: IsCyclic G] : CommGroup G := .mk fun a b ↦
 noncomputable def cyclic_infinite_Z [Group G] [Infinite G] [hG: IsCyclic G] :
   G ≃* Multiplicative ℤ :=
   -- for some reason ∃ can't be unboxed like ⟨x, hx⟩ in def (not theorem)
-  let x := hG.exists_generator.choose;
-  have hx : (g: G) → g ∈ Subgroup.zpowers x := hG.exists_generator.choose_spec;
+  let x := (hG.exists_generator).choose;
+  have hx : (g: G) → g ∈ Subgroup.zpowers x := (hG.exists_generator).choose_spec;
   have order_x_0 : orderOf x = 0 := Infinite.orderOf_eq_zero_of_forall_mem_zpowers hx
   have not_isOfFinOrder_x : ¬IsOfFinOrder x := orderOf_eq_zero_iff.mp order_x_0
   have h_pow (g: G) : ∃(k: ℤ), x ^ k = g := Subgroup.mem_zpowers_iff.mp (hx g);
@@ -54,8 +54,8 @@ noncomputable def cyclic_finite_ZMod [Group G] [Fintype G] [hG: IsCyclic G] :
   let m := Fintype.card G;
   let ZM := ZMod m;
   -- for some reason ∃ can't be unboxed like ⟨x, hx⟩ in this case
-  let x := hG.exists_generator.choose;
-  have hx : (g: G) → g ∈ Subgroup.zpowers x := hG.exists_generator.choose_spec;
+  let x := (hG.exists_generator).choose;
+  have hx : (g: G) → g ∈ Subgroup.zpowers x := (hG.exists_generator).choose_spec;
   have h_pow (g: G) : ∃(k: ℤ), x ^ k = g := Subgroup.mem_zpowers_iff.mp (hx g);
   let φ (g: G) : Multiplicative ZM := ((h_pow g).choose: ZM);
   let φ_inv (n: ZM) := x ^ (n.val: ℤ)
@@ -164,6 +164,7 @@ theorem cyclic_subgroup_cyclic [Group G] [hG: IsCyclic G] (S: Subgroup G): IsCyc
     Subgroup.mem_zpowers_iff.mpr ⟨q, s_q_eq⟩
   ⟨s, s_gen⟩
 
+-- giving up on this for now
 theorem cyclic_dvd_subgroup
   [Group G] [Fintype G] [hG: IsCyclic G] (m: ℕ) (hm: m ∣ Nat.card G) :
   ∃! S: Subgroup G, Nat.card S = m ∧ IsCyclic S :=
@@ -248,3 +249,15 @@ theorem cyclic_dvd_subgroup
     exact Subgroup.ext elems_eq
   -- exact ExistsUnique.intro S ⟨card_S, IsCyclic_S⟩ S_unique
   ⟨S, ⟨card_S, IsCyclic_S⟩, S_unique⟩
+
+example [Group G] [Fintype G] (x: G) :
+  orderOf x ∣ (Fintype.card G) ∧ x ^ (Fintype.card G) = 1 :=
+  let nG := Fintype.card G;
+  let ord_x := orderOf x;
+  have ord_x_dvd_nG : ord_x ∣ nG := orderOf_dvd_card
+  have x_pow_nG_eq_one : x ^ nG = 1 := calc x ^ nG
+    _ = x ^ (ord_x * (nG / ord_x)) := (Nat.mul_div_cancel_left' ord_x_dvd_nG).symm ▸ rfl
+    _ = (x ^ ord_x) ^ (nG / ord_x) := pow_mul x ord_x (nG / ord_x)
+    _ = 1 ^ (nG / ord_x) := pow_orderOf_eq_one x ▸ rfl
+    _ = 1 := one_pow (nG / ord_x)
+  ⟨ord_x_dvd_nG, x_pow_nG_eq_one⟩
