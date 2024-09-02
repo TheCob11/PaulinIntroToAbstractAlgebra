@@ -2,7 +2,7 @@ import Mathlib
 open MulAction
 open Function (Injective Surjective Bijective)
 
-theorem mem_subgroup_iff_quotient_eq [Group G] {S: Subgroup G} {x y : G} :
+lemma mem_subgroup_iff_quotient_eq [Group G] {S: Subgroup G} {x y : G} :
   x⁻¹*y ∈ S ↔ @Eq (G ⧸ S) ⟦x⟧ ⟦y⟧ :=
   by rw [← QuotientGroup.leftRel_apply, ← @Quotient.eq']; rfl
 
