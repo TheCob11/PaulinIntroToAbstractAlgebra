@@ -54,61 +54,67 @@ lemma singleton_conj_iff_mem_center [Group G] (g: G):
     ConjAct.fixedPoints_eq_center.subst this
   ⟨mp, mpr⟩
 
-theorem center_nontrivial_of_prime_pow_order
-  [Group G] {p n: ℕ} [hp: Fact p.Prime] [NeZero n] [Fintype G]
-  (hnG: Fintype.card G = p ^ n) : Nontrivial (Subgroup.center G) :=
+theorem center_ne_bot_of_prime_pow_order
+  [Group G] [Fintype G] (hG: IsPrimePow (Fintype.card G)):
+  Subgroup.center G ≠ ⊥ := fun h ↦
   have _ := Classical.dec
-  let ZG := Subgroup.center G
   let Conj := ConjAct G
-  have : ZG ≠ ⊥ := fun h ↦
-    have sum_card_conj : ∑x: ConjClasses G, Fintype.card x.carrier = p ^ n := hnG ▸
-      Finset.sum_congr
-        rfl
-        (fun x _ ↦ @Set.toFinset_card G (ConjClasses.carrier x) _)
-      ▸ sum_conjClasses_card_eq_card G
-    have card_conj1_eq_1 : Fintype.card (@ConjClasses.carrier G _ 1) = 1 := by
-      have : ConjClasses.carrier 1 = (ConjClasses.mk (1: G)).carrier := rfl
-      simp_rw [this, ← ConjAct.orbit_eq_carrier_conjClasses]
-      have : orbit Conj (1: G) = {1} := Set.ext fun x ↦
-        (@ConjAct.mem_orbit_conjAct G _ x 1).trans isConj_one_left
-      exact this ▸ @Fintype.card_unique _ _ (_)
-    let sum_diff_one_card := ∑ x ∈ @Finset.univ (ConjClasses G) _ \ {1},
-      Fintype.card x.carrier
-    have p_dvd_sum_diff_one_card :
-      p ∣ sum_diff_one_card := Finset.dvd_sum fun conjCl_g hconjCl_g ↦
-      have ⟨g, hg⟩ := ConjClasses.exists_rep conjCl_g
-      let Cg := orbit Conj g
-      have Cg_eq : Cg = conjCl_g.carrier := hg ▸
-        ConjAct.orbit_eq_carrier_conjClasses g
-      have g_ne_one : g ≠ 1 := fun g_eq_one ↦
-        have : conjCl_g ≠ 1 := Finset.not_mem_singleton.mp <|
-            Finset.not_mem_sdiff_of_mem_right.mt (not_not.mpr hconjCl_g)
-        this.symm <| (g_eq_one ▸ ConjClasses.one_eq_mk_one).trans hg
-      have Cg_nontrivial : Cg.Nontrivial := by_contra fun hnot_nontrivial ↦
-        have g_mem_Cg : g ∈ Cg := orbit_eq_iff.mp rfl
-        have g_not_mem_ZG : g ∉ ZG := h ▸ g_ne_one
-        have Cg_not_sing : Cg ≠ {g} :=
-          (singleton_conj_iff_mem_center g).not.mp g_not_mem_ZG
-        have subsingleton := Set.not_nontrivial_iff.mp hnot_nontrivial
-        Cg_not_sing ((Set.subsingleton_iff_singleton g_mem_Cg).mp subsingleton)
-      have card_Cg_dvd_p_n : Fintype.card Cg ∣ p ^ n := hnG ▸ Exists.intro
-        (Fintype.card (stabilizer Conj g))
-        (card_orbit_mul_card_stabilizer_eq_card_group Conj g).symm
-      have p_dvd_card_Cg : p ∣ Fintype.card Cg :=
-        have ⟨k, ⟨_, hk⟩⟩ := (Nat.dvd_prime_pow hp.out).mp card_Cg_dvd_p_n
-        have k_nz : k ≠ 0 := fun k_eq_zero ↦
-          have : Fintype.card Cg = 1 := k_eq_zero ▸ hk |>.trans p.pow_zero
-          Fintype.one_lt_card_iff_nontrivial.not.mp this.symm.not_lt <|
-            Cg_nontrivial.coe_sort
-        hk ▸ dvd_pow_self p k_nz
-      Fintype.card_congr' (congrArg (↑·) Cg_eq) ▸ p_dvd_card_Cg
+  have ⟨p, n, ⟨hp, n_pos, hpn⟩⟩ := hG
+  have p_prime := hp.nat_prime
+  have sum_card_conj : ∑x: ConjClasses G, Fintype.card x.carrier = p ^ n := hpn ▸
+    Finset.sum_congr
+      rfl
+      (fun x _ ↦ @Set.toFinset_card G (ConjClasses.carrier x) _)
+    ▸ sum_conjClasses_card_eq_card G
+  have card_conj1_eq_1 : Fintype.card (@ConjClasses.carrier G _ 1) = 1 := by
+    have : ConjClasses.carrier 1 = (ConjClasses.mk (1: G)).carrier := rfl
+    simp_rw [this, ← ConjAct.orbit_eq_carrier_conjClasses]
+    have : orbit Conj (1: G) = {1} := Set.ext fun x ↦
+      (@ConjAct.mem_orbit_conjAct G _ x 1).trans isConj_one_left
+    exact this ▸ @Fintype.card_unique _ _ (_)
+  let sum_diff_one_card := ∑ x ∈ @Finset.univ (ConjClasses G) _ \ {1},
+    Fintype.card x.carrier
+  have p_dvd_sum_diff_one_card :
+    p ∣ sum_diff_one_card := Finset.dvd_sum fun conjCl_g hconjCl_g ↦
+    have ⟨g, hg⟩ := ConjClasses.exists_rep conjCl_g
+    let Cg := orbit Conj g
+    have Cg_eq : Cg = conjCl_g.carrier := hg ▸
+      ConjAct.orbit_eq_carrier_conjClasses g
+    have g_ne_one : g ≠ 1 := fun g_eq_one ↦
+      have : conjCl_g ≠ 1 := Finset.not_mem_singleton.mp <|
+          Finset.not_mem_sdiff_of_mem_right.mt (not_not.mpr hconjCl_g)
+      this.symm <| (g_eq_one ▸ ConjClasses.one_eq_mk_one).trans hg
+    have Cg_nontrivial : Cg.Nontrivial := by_contra fun hnot_nontrivial ↦
+      have g_mem_Cg : g ∈ Cg := orbit_eq_iff.mp rfl
+      have g_not_mem_ZG := h ▸ Subgroup.mem_bot.not.mpr g_ne_one
+      have Cg_not_sing : Cg ≠ {g} :=
+        (singleton_conj_iff_mem_center g).not.mp g_not_mem_ZG
+      have subsingleton := Set.not_nontrivial_iff.mp hnot_nontrivial
+      Cg_not_sing ((Set.subsingleton_iff_singleton g_mem_Cg).mp subsingleton)
+    have card_Cg_dvd_p_n : Fintype.card Cg ∣ p ^ n := hpn ▸ Exists.intro
+      (Fintype.card (stabilizer Conj g))
+      (card_orbit_mul_card_stabilizer_eq_card_group Conj g).symm
+    have p_dvd_card_Cg : p ∣ Fintype.card Cg :=
+      have ⟨k, ⟨_, hk⟩⟩ := (Nat.dvd_prime_pow p_prime).mp card_Cg_dvd_p_n
+      have k_nz : k ≠ 0 := fun k_eq_zero ↦
+        have : Fintype.card Cg = 1 := k_eq_zero ▸ hk |>.trans p.pow_zero
+        Fintype.one_lt_card_iff_nontrivial.not.mp this.symm.not_lt <|
+          Cg_nontrivial.coe_sort
+      hk ▸ dvd_pow_self p k_nz
+    Fintype.card_congr' (congrArg (↑·) Cg_eq) ▸ p_dvd_card_Cg
 
-    have : 1 + sum_diff_one_card = p ^ n := card_conj1_eq_1 ▸
-      Finset.sum_eq_add_sum_diff_singleton
-        (Finset.mem_univ (1: ConjClasses G))
-          (Fintype.card ·.carrier) ▸
-      sum_card_conj
-    have p_dvd_p_n : p ∣ p ^ n := dvd_pow_self p NeZero.out
-    this ▸ Nat.dvd_add_left p_dvd_sum_diff_one_card |>.not.mpr
-      hp.out.not_dvd_one <| p_dvd_p_n
-  (Subgroup.nontrivial_iff_ne_bot (Subgroup.center G)).mpr this
+  have : 1 + sum_diff_one_card = p ^ n := card_conj1_eq_1 ▸
+    Finset.sum_eq_add_sum_diff_singleton
+      (Finset.mem_univ (1: ConjClasses G))
+        (Fintype.card ·.carrier) ▸
+    sum_card_conj
+  have p_dvd_p_n : p ∣ p ^ n := dvd_pow_self p n_pos.ne.symm
+  this ▸ Nat.dvd_add_left p_dvd_sum_diff_one_card |>.not.mpr
+    p_prime.not_dvd_one <| p_dvd_p_n
+
+-- version in the book
+theorem center_nontrivial_of_prime_pow_order
+  [Group G] [Fintype G] (hG: IsPrimePow (Fintype.card G)) :
+  Nontrivial (Subgroup.center G) :=
+  Subgroup.nontrivial_iff_ne_bot (Subgroup.center G) |>.mpr <|
+    center_ne_bot_of_prime_pow_order hG
